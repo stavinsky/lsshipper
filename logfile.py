@@ -4,12 +4,14 @@ from database import DataBase
 
 
 class LogFile(FileReader):
-    def __init__(self, name, mtime=0, offset=0):
+    def __init__(self, name, mtime=0, offset=0, sep=b"\r\n"):
+        super().__init__(name, offset=offset)
         self.name = name  # ToDo make sure that this variable is full path
         self.mtime = mtime  # Current modify time
         self.last_mtime = 0   # Modify time from os.stat
         self.offset = offset
         self.db = DataBase("test.db")
+        self.sep = sep
 
     @property
     def need_update(self):

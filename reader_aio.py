@@ -4,49 +4,45 @@ import aiofiles
 from config import config
 
 
-def_sep = b'\r\n'
-def_sep = b'\n'
-
-
-class ReturnCode:
-    ok = 0
-    eof = 1
-    zero = 2
-
-
 class FileReader(object):
-    def __init__(self, filename, offset=0):
+    def __init__(self, filename, offset=0, sep=b'\r\n'):
         self.name = os.path.abspath(filename)
         self.offset = 0
+        self.sep = sep  # line separator
 
-    async def get_line(self, chunk_size=8196):
+    async def get_line(self, chunk_size=4096):
         async with aiofiles.open(self.name, 'r+b') as f:
-            while True:
-                await f.seek(self.offset)
+            await f.seek(self.offset)
+            tmp_line = b""
+            cont = True
+            while cont:
                 chunk = await f.read(chunk_size)
-                chunk_lengh = len(chunk)
                 if not chunk:
-                    yield (None, self.offset, ReturnCode.eof)
+                    yield (None, self.offset)
                     break
+                if chunk[-1] == 0:
+                    cont = False
+                if len(tmp_line):
+                    chunk = tmp_line + chunk
+                    tmp_line = b''
                 while chunk:
-                    line, sep, chunk = chunk.partition(def_sep)
-                    if line and line[-1] == 0:
-                        yield (None, self.offset, ReturnCode.zero)
-                    if sep == def_sep:
-                        self.offset += len(line) + len(sep)
-                        yield (line, self.offset, ReturnCode.ok)
-                if chunk_lengh < chunk_size:
-                    yield (None, self.offset, ReturnCode.eof)
-                    break
+                    line, sep, chunk = chunk.partition(self.sep)
+                    if sep is self.sep:
+                        self.offset = self.offset + len(line) + len(self.sep)
+                        yield (line, self.offset)
+                    if sep is b'':
+                        tmp_line = tmp_line + line
+                if not cont:
+                    yield (None, self.offset)
 
 
 async def print_lines():
-    reader = FileReader(filename="test_files/test1.txt")
-    async for line, offset, code in reader.get_line():
-        if code == ReturnCode.ok:
+    reader = FileReader(filename="test_files/20170829.log", sep=b"\n")
+    async for line, offset in reader.get_line():
+        if line:
             sys.stdout.write(
-                line.decode(config['file_encoding'], "replace") + '\n')
-            pass
+                line.decode(config['file_encoding'], "replace") + "\n")
+
 
 if __name__ == "__main__":
     import asyncio

@@ -1,7 +1,6 @@
 import os
 import re
 import asyncio
-import janus
 import ssl
 from concurrent.futures import ProcessPoolExecutor, TimeoutError
 from logfile import LogFile
@@ -34,6 +33,7 @@ class MainHandler(object):
                 f = LogFile(
                     full_path,
                     mtime=os.stat(full_path).st_mtime,
+                    sep=b"\n"
                 )
                 f.sync_from_db()
                 files.append(f)
@@ -41,7 +41,7 @@ class MainHandler(object):
         return [f for f in files if f.need_update]
 
     async def ship(self, f):
-        async for line, offset, code in f.get_line():
+        async for line, offset in f.get_line():
             if self.stop_now:
                 f.sync_to_db(mtime_update=False)
                 break
@@ -64,7 +64,8 @@ class MainHandler(object):
         try:
             reader, writer = await asyncio.open_connection(
                 host=config['host'], port=config['port'],
-                ssl=ssl_context, family=socket.AF_INET)
+                ssl=None,
+                family=socket.AF_INET)
 
         except socket_error as serror:
             if serror.errno == errno.ECONNREFUSED:
