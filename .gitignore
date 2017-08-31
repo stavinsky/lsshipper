@@ -1,0 +1,8 @@
+*.pyc
+__pycache__
+.idea/
+/certs/
+archive/
+*.db
+*.sqlite3
+test_files/
