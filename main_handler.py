@@ -64,7 +64,7 @@ class MainHandler(object):
         try:
             reader, writer = await asyncio.open_connection(
                 host=config['host'], port=config['port'],
-                ssl=None, family=socket.AF_INET)
+                ssl=ssl_context, family=socket.AF_INET)
 
         except socket_error as serror:
             if serror.errno == errno.ECONNREFUSED:
