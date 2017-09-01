@@ -6,7 +6,10 @@ config = {
     "port": 5045,
     "file_encoding": "utf-8",
     "files_path":
-        "/Users/stavinsky/Dropbox/Dev/python/logstash-shipper/test_files/",
-    # "file_names_regexp": "test\d+.txt"
-    "file_names_regexp": "20170829\.log"
+        # "/Users/stavinsky/Dropbox/Dev/python/logstash-shipper/test_files/",
+        "/Users/stavinsky/temp",
+    # "file_names_regexp": "test\d+.txt",
+    "file_names_regexp": "20170829\.log",
+    "ssl": False,
+    "line_separator": "\r\n",
 }

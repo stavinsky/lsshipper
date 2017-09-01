@@ -10,7 +10,7 @@ class LogFile(FileReader):
         self.mtime = mtime  # Current modify time
         self.last_mtime = 0   # Modify time from os.stat
         self.offset = offset
-        self.db = DataBase("test.db")
+        self.db_file = "test.db"
         self.sep = sep
 
     @property
@@ -18,15 +18,19 @@ class LogFile(FileReader):
         return self.mtime > self.last_mtime
 
     def sync_from_db(self,):
-        self.db.insert_ignore_file(self.name, 0)
-        f = self.db.get_file(self.name)
+        print("sync_from_db")
+        with DataBase(self.db_file) as db:
+            db.insert_ignore_file(self.name, 0)
+            f = db.get_file(self.name)
         self.offset = f[2]
         self.last_mtime = f[1]
 
     def sync_to_db(self, mtime_update=False):
+        print("sync_to_db")
         if mtime_update:
             self.last_mtime = self.mtime
-        self.db.update_file(self.name, self.offset, self.last_mtime)
+        with DataBase(self.db_file) as db:
+            db.update_file(self.name, self.offset, self.last_mtime)
 
     def line_to_json(self, line, offset):
         data = {

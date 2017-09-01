@@ -34,18 +34,3 @@ class FileReader(object):
                         tmp_line = tmp_line + line
                 if not cont:
                     yield (None, self.offset)
-
-
-async def print_lines():
-    reader = FileReader(filename="test_files/20170829.log", sep=b"\n")
-    async for line, offset in reader.get_line():
-        if line:
-            sys.stdout.write(
-                line.decode(config['file_encoding'], "replace") + "\n")
-
-
-if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(print_lines())
-    loop.close()

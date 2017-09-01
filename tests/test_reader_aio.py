@@ -49,14 +49,14 @@ async def test_read_file_with_zeroes(chunk_size):
     lines = lines[:-1]
     with open(file2, "rb") as f:
         lines_orig = f.read().split(b"\n")
-        if bytes([0]) in lines_orig[-1]:
+        if 0 == lines_orig[-1][-1]:
             lines_orig = lines_orig[:-1]
             # I'm doing like this because
             # I need to collect only strings with "\n" symbol at the end
             # and we don't need any \x00
     for i in range(len(lines)):
         assert lines[i] == lines_orig[i]
-
+    assert len(lines) == len(lines_orig)
     assert lines == lines_orig
 
 
