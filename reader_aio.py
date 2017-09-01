@@ -1,7 +1,5 @@
-import sys
 import os
 import aiofiles
-from config import config
 
 
 class FileReader(object):

@@ -17,6 +17,7 @@ def get_files_list(filepath, pattern, separator):
 
     return files
 
+
 async def get_files_to_update(loop, filepath, pattern, line_separator):
     with ProcessPoolExecutor() as executor:
         files = await loop.run_in_executor(

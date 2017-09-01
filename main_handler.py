@@ -1,11 +1,7 @@
-import os
-import re
 import asyncio
-from concurrent.futures import ProcessPoolExecutor, TimeoutError
-from logfile import LogFile
-from config import config
+from common.config import config
 from connection import logstash_connection
-from utils import get_files_to_update
+from common.utils import get_files_to_update
 import logging
 logger = logging.getLogger(name="general")
 
@@ -20,7 +16,6 @@ class MainHandler(object):
 
     async def ship(self, f):
         async for line, offset in f.get_line():
-
             if self.state.need_shutdown:
                 f.sync_to_db(mtime_update=False)
                 break
@@ -30,7 +25,7 @@ class MainHandler(object):
                     try:
                         await asyncio.wait_for(
                             self.queue.put(message),
-                            timeout=20)
+                            timeout=2)
                         break
                     except asyncio.TimeoutError:
                         logger.debug("Queue is full, timeout on put")
@@ -42,21 +37,22 @@ class MainHandler(object):
         self.files_in_work.remove(f.name)
 
     async def start(self):
-        pattern = re.compile(config['file_names_regexp'])
-        line_separator = config["line_separator"].encode()
+        files_conf = config['files']
+        pattern = files_conf['pattern']
+        newline = files_conf["newline"].encode()
+        logger.debug("new lines is {}".format(newline[0]))
         asyncio.ensure_future(logstash_connection(
-            queue=self.queue, state=self.state, loop=self.loop,
-            use_ssl=config['ssl'], host=config['host'], port=config['port']
-        ))
+            queue=self.queue, state=self.state, loop=self.loop, ))
         while not self.state.need_shutdown:
             files = await get_files_to_update(
-                self.loop, config['files_path'], pattern, line_separator)
+                self.loop, files_conf['dir_path'], pattern, newline)
             for f in files:
                 if f.name in self.files_in_work:
                     continue
                 f.sync_from_db()
                 if not f.need_update:
                     continue
+                logger.debug("working with file:{}".format(f.name))
                 self.tasks.append(asyncio.ensure_future(self.ship(f)))
                 self.files_in_work.add(f.name)
             self.tasks = list(task for task in self.tasks if not task.done())
@@ -64,6 +60,7 @@ class MainHandler(object):
             logger.info("queue size: {}".format(self.queue.qsize()))
 
         while self.tasks:
+            print(self.files_in_work)
             self.tasks = list(task for task in self.tasks if not task.done())
-            logger.info("stopping task")
-            await asyncio.sleep(0.1)
+            logger.info("stopping tasks, still {}".format(len(self.tasks)))
+            await asyncio.sleep(0.3)

@@ -3,14 +3,14 @@ from main_handler import MainHandler
 import signal
 from functools import partial
 import logging
-
+from common.config import config
 
 signal_times = 0
 
 logger = logging.getLogger(name="general")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(config['general']['log_level'])
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(config['general']['log_level'])
 logger.addHandler(ch)
 
 

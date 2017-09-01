@@ -1,24 +1,33 @@
 import json
 from reader_aio import FileReader
 from database import DataBase
+from common.config import config
+import os
 
 
 class LogFile(FileReader):
-    def __init__(self, name, mtime=0, offset=0, sep=b"\r\n"):
+    def __init__(self, name, mtime=0, offset=0, sep='\n'):
         super().__init__(name, offset=offset)
         self.name = name  # ToDo make sure that this variable is full path
         self.mtime = mtime  # Current modify time
         self.last_mtime = 0   # Modify time from os.stat
         self.offset = offset
-        self.db_file = "test.db"
+        self.db_file = config['database']["file"]
         self.sep = sep
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = os.path.abspath(name)
 
     @property
     def need_update(self):
         return self.mtime > self.last_mtime
 
     def sync_from_db(self,):
-        print("sync_from_db")
         with DataBase(self.db_file) as db:
             db.insert_ignore_file(self.name, 0)
             f = db.get_file(self.name)
@@ -26,7 +35,6 @@ class LogFile(FileReader):
         self.last_mtime = f[1]
 
     def sync_to_db(self, mtime_update=False):
-        print("sync_to_db")
         if mtime_update:
             self.last_mtime = self.mtime
         with DataBase(self.db_file) as db:
