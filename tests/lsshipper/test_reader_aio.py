@@ -1,8 +1,8 @@
 import pytest
-from reader_aio import FileReader
+from lsshipper.reader_aio import FileReader
 
-file1 = "test_files/test1.txt"
-file2 = "test_files/test2.txt"
+file1 = "tests/lsshipper/test_files/test1.txt"
+file2 = "tests/lsshipper/test_files/test2.txt"
 
 
 @pytest.mark.asyncio

@@ -8,6 +8,9 @@ async def handle_echo(reader, writer):
     while line:
         line = await reader.readline()
         sys.stdout.write(line.decode())
+        break
+    writer.close()
+
 
 loop = asyncio.get_event_loop()
 coro = asyncio.start_server(handle_echo, '127.0.0.1', 5045, loop=loop)

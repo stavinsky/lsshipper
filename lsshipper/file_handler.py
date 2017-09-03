@@ -47,7 +47,7 @@ class FileHandler(object):
         pattern = files_conf['pattern']
         newline = files_conf["newline"]
         logger.debug("new lines is {}".format(newline[0]))
-        asyncio.ensure_future(logstash_connection(
+        conn = asyncio.ensure_future(logstash_connection(
             queue=self.queue, state=self.state, loop=self.loop, ))
         while not self.state.need_shutdown:
             files = await get_files_to_update(
@@ -69,3 +69,4 @@ class FileHandler(object):
             self.tasks = list(task for task in self.tasks if not task.done())
             logger.info("stopping tasks, still {}".format(len(self.tasks)))
             await asyncio.sleep(0.3)
+        await conn

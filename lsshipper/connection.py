@@ -23,53 +23,61 @@ async def get_message_from_queue(queue):
     message = None
     try:
         message = await asyncio.wait_for(queue.get(), timeout=1)
+        queue.task_done()
     except asyncio.TimeoutError:
         pass
     return message
 
 
-async def logstash_connection(queue, state, loop, message=None):
-    conn = config["connection"]
-    host = conn['host']
-    port = conn['port']
-
-    if state.need_shutdown:
-        return
-
+async def get_connection():
+    host = config["connection"]['host']
+    port = config["connection"]['port']
     try:
         reader, writer = await asyncio.open_connection(
             host=host, port=port,
             ssl=get_ssl_context(),
             family=socket.AF_INET)
-
-    except ConnectionError as serror:
+        return reader, writer
+    except ConnectionError:
         logger.debug(
             ("cant connect to {}:{}, "
              "going to try again").format(
                 host, port))
-        await asyncio.sleep(5)
-        asyncio.ensure_future(
-            logstash_connection(queue, state, loop, message=None))
-        return
-    while not (state.need_shutdown and queue.qsize() == 0):
-        if message is None:
-            message = await get_message_from_queue(queue)
-        if not message:
+        return None
+
+
+async def send_message(reader, writer, message):
+    if reader.at_eof():
+        logger.error("Server disconnected while transfer")
+        return True, message
+    try:
+        writer.write(message.encode())
+        await writer.drain()
+    except Exception as e:
+        logger.error("Exception: {}".format(e))
+        return True, message
+    return False, None
+
+
+async def logstash_connection(queue, state, loop):
+    message = None
+    need_reconnect = True
+    conn = None
+    while (state.need_shutdown is False) or queue.qsize() > 0:
+        if need_reconnect:
+            logger.info("connecting to server")
+            conn = await get_connection()
+        if not conn:
+            logger.info("reconnecting")
+            await asyncio.sleep(1)
+            need_reconnect = True
             continue
+        need_reconnect = False
 
-        if reader.at_eof():
-            asyncio.ensure_future(
-                logstash_connection(queue, state, loop, message=message))
-            logger.error("Server disconnected")
-            break
-        try:
-            writer.write(message.encode())
-            await writer.drain()
-        except Exception as e:
-            logger.error("Exception: {}".format(e))
-            asyncio.ensure_future(
-                logstash_connection(queue, state, loop, message=message))
-            break
+        if not message:
+            message = await get_message_from_queue(queue)
 
-        message = None
-        queue.task_done()
+        if message:
+            need_reconnect, message = await send_message(*conn, message)
+    reader, writer = conn
+    writer.close()

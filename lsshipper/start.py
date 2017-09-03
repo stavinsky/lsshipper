@@ -5,8 +5,8 @@ from functools import partial
 import logging
 import logging.config
 from .common.state import State
+from lsshipper.common.config import config, prepare_config
 
-logging.config.fileConfig('log_config.ini')
 signal_times = 0
 logger = logging.getLogger('general')
 
@@ -20,6 +20,8 @@ def got_int_signal(state, signum, frame):
 
 
 def main():
+    prepare_config(config)
+    print(config)
     loop = asyncio.get_event_loop()
     state = State(loop)
     shipper = FileHandler(loop=loop, state=state)
