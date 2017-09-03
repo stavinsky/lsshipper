@@ -10,3 +10,4 @@ temp/
 *.egg-info/
 build/
 .coverage
+.eggs/
