@@ -1,7 +1,7 @@
 import asyncio
-from common.config import config
-from connection import logstash_connection
-from common.utils import get_files_to_update
+from .common.config import config
+from .connection import logstash_connection
+from .common.utils import get_files_to_update
 import logging
 logger = logging.getLogger(name="general")
 

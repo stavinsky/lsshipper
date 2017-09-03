@@ -1,7 +1,7 @@
 import asyncio
 # from socket import error as socket_error
 import socket
-from common.config import config
+from .common.config import config
 import ssl
 import logging
 

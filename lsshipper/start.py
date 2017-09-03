@@ -1,10 +1,10 @@
 import asyncio
-from file_handler import FileHandler
+from .file_handler import FileHandler
 import signal
 from functools import partial
 import logging
 import logging.config
-from common.state import State
+from .common.state import State
 
 logging.config.fileConfig('log_config.ini')
 signal_times = 0
@@ -16,12 +16,12 @@ def got_int_signal(state, signum, frame):
     signal_times += 1
     state.shutdown()
     if signal_times > 1:
-        loop.close()
+        state.loop.close()
 
 
-if __name__ == "__main__":
+def main():
     loop = asyncio.get_event_loop()
-    state = State()
+    state = State(loop)
     shipper = FileHandler(loop=loop, state=state)
     task = asyncio.ensure_future(shipper.start())
     signal.signal(signal.SIGINT, partial(got_int_signal, state))

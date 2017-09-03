@@ -1,5 +1,5 @@
 import os
-from logfile import LogFile
+from lsshipper.logfile import LogFile
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 

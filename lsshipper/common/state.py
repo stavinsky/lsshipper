@@ -1,6 +1,7 @@
 class State:
-    def __init__(self, need_shutdown=False):
+    def __init__(self, loop, need_shutdown=False, ):
         self._need_shutdown = need_shutdown
+        self.loop = loop
 
     @property
     def need_shutdown(self):

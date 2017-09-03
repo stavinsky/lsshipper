@@ -1,7 +1,7 @@
 import json
-from reader_aio import FileReader
-from database import DataBase
-from common.config import config
+from .reader_aio import FileReader
+from .database import DataBase
+from .common.config import config
 import os
 
 

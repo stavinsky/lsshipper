@@ -3,25 +3,11 @@ import logging
 import configobj
 import re
 import sys
-import os
 import ast
-from docopt import docopt
+
 logger = logging.getLogger("general")
 
-opt_config = """
-Usage:
-    main.py [--config=<config.ini>]
-"""
-
-args = docopt(opt_config, version='Naval Fate 2.0')
-
 config_file = 'config.ini'
-if args['--config']:
-    config_file = args['--config']
-if not all((os.path.exists(config_file), os.path.isfile(config_file))):
-    print('Config file not found')
-    sys.exit(1)
-
 
 try:
     _config = ConfigObj(config_file, raise_errors=True)
