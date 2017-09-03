@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(name="general")
 
 
-class MainHandler(object):
+class FileHandler(object):
     def __init__(self, loop, state):
         self.files_in_work = set()
         self.loop = loop
@@ -16,8 +16,14 @@ class MainHandler(object):
 
     async def ship(self, f):
         async for line, offset in f.get_line():
+
             if self.state.need_shutdown:
                 f.sync_to_db(mtime_update=False)
+                try:
+                    await asyncio.wait_for(self.queue.join(), timeout=10)
+                    logger.warning("waiting for deliver all message")
+                except:
+                    logger.error("not all message was delivered")
                 break
             if line:
                 message = f.line_to_json(line, offset)
@@ -39,7 +45,7 @@ class MainHandler(object):
     async def start(self):
         files_conf = config['files']
         pattern = files_conf['pattern']
-        newline = files_conf["newline"].encode()
+        newline = files_conf["newline"]
         logger.debug("new lines is {}".format(newline[0]))
         asyncio.ensure_future(logstash_connection(
             queue=self.queue, state=self.state, loop=self.loop, ))
@@ -60,7 +66,6 @@ class MainHandler(object):
             logger.info("queue size: {}".format(self.queue.qsize()))
 
         while self.tasks:
-            print(self.files_in_work)
             self.tasks = list(task for task in self.tasks if not task.done())
             logger.info("stopping tasks, still {}".format(len(self.tasks)))
             await asyncio.sleep(0.3)

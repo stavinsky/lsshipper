@@ -1,5 +1,5 @@
 import asyncio
-from socket import error as socket_error
+# from socket import error as socket_error
 import socket
 from common.config import config
 import ssl
@@ -32,42 +32,43 @@ async def logstash_connection(queue, state, loop, message=None):
     conn = config["connection"]
     host = conn['host']
     port = conn['port']
+
     if state.need_shutdown:
         return
+
     try:
-        logger.debug("connecting to {}:{}".format(host, port))
         reader, writer = await asyncio.open_connection(
             host=host, port=port,
             ssl=get_ssl_context(),
             family=socket.AF_INET)
-        logger.debug("connected to {}:{}".format(host, port))
 
-    except socket_error as serror:
+    except ConnectionError as serror:
         logger.debug(
-            "cant connect to {}:{}, going to try again error:{}".format(
-                host, port, serror.errno))
+            ("cant connect to {}:{}, "
+             "going to try again").format(
+                host, port))
         await asyncio.sleep(5)
         asyncio.ensure_future(
             logstash_connection(queue, state, loop, message=None))
         return
-    while not state.need_shutdown:
+    while not (state.need_shutdown and queue.qsize() == 0):
         if message is None:
             message = await get_message_from_queue(queue)
         if not message:
             continue
-        logger.debug("got message from queue")
-        logger.debug("sending message to logstash")
 
+        if reader.at_eof():
+            asyncio.ensure_future(
+                logstash_connection(queue, state, loop, message=message))
+            logger.error("Server disconnected")
+            break
         try:
             writer.write(message.encode())
             await writer.drain()
-            if reader.exception():
-                raise Exception("Connection ERROR")
-            logger.debug("sent ok")
         except Exception as e:
-            logger.debug("Exception: {}".format(e))
+            logger.error("Exception: {}".format(e))
             asyncio.ensure_future(
-                logstash_connection(queue, state, loop, message=None))
+                logstash_connection(queue, state, loop, message=message))
             break
 
         message = None

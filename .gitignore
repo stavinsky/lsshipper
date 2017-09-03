@@ -6,3 +6,4 @@ archive/
 *.db
 *.sqlite3
 .cache/
+temp/

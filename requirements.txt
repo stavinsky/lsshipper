@@ -1,1 +1,4 @@
-aiofiles
+aiofiles==0.3.1
+configobj==5.0.6
+docopt==0.6.2
+six==1.10.0

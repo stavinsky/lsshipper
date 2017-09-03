@@ -1,33 +1,14 @@
 import asyncio
-from main_handler import MainHandler
+from file_handler import FileHandler
 import signal
 from functools import partial
 import logging
-from common.config import config
+import logging.config
+from common.state import State
 
+logging.config.fileConfig('log_config.ini')
 signal_times = 0
-
-logger = logging.getLogger(name="general")
-logger.setLevel(config['general']['log_level'])
-ch = logging.StreamHandler()
-ch.setLevel(config['general']['log_level'])
-logger.addHandler(ch)
-
-
-class State:
-    def __init__(self, need_shutdown=False):
-        self._need_shutdown = need_shutdown
-
-    @property
-    def need_shutdown(self):
-        return self._need_shutdown
-
-    def shutdown(self):
-        self._need_shutdown = True
-
-    def __repr__(self,):
-        return "shutdown is{} needed".format(
-            "" if self._need_shutdown else " not")
+logger = logging.getLogger('general')
 
 
 def got_int_signal(state, signum, frame):
@@ -41,7 +22,7 @@ def got_int_signal(state, signum, frame):
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     state = State()
-    shipper = MainHandler(loop=loop, state=state)
+    shipper = FileHandler(loop=loop, state=state)
     task = asyncio.ensure_future(shipper.start())
     signal.signal(signal.SIGINT, partial(got_int_signal, state))
 

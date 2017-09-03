@@ -1,7 +1,9 @@
 import asyncio
 import sys
+
+
 async def handle_echo(reader, writer):
-    addr = writer.get_extra_info('peername')
+    # addr = writer.get_extra_info('peername')
     line = " "
     while line:
         line = await reader.readline()
