@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(fname):
@@ -21,7 +21,7 @@ setup(
     license="BSD",
     keywords="logstash filebeat",
     url="https://bitbucket.org/stavinsky/logstash_shipper",
-    packages=['lsshipper', 'tests'],
+    packages=find_packages(),
     tests_require=['pytest', 'pytest-asyncio', ],
     setup_requires=['pytest-runner', ],
     long_description=read('README.MD'),
