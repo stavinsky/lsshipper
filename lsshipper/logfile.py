@@ -9,7 +9,7 @@ class LogFile(FileReader):
     def __init__(self, name, mtime=0, offset=0, sep='\n'):
         super().__init__(name, offset=offset)
         self.name = name  # ToDo make sure that this variable is full path
-        self.mtime = mtime  # Current modify time
+        self.mtime = mtime  # Current modify time from db
         self.last_mtime = 0   # Modify time from os.stat
         self.offset = offset
         self.db_file = config['database']["file"]
