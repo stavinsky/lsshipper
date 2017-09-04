@@ -1,4 +1,4 @@
-from lsshipper.common.config import config, prepare_config
+from lsshipper.common.config import prepare_config
 import asyncio
 from .file_handler import FileHandler
 import signal
@@ -20,10 +20,10 @@ def got_int_signal(state, signum, frame):
 
 
 def main():
-    prepare_config(config)
+    config = prepare_config()
     loop = asyncio.get_event_loop()
     state = State(loop)
-    shipper = FileHandler(loop=loop, state=state)
+    shipper = FileHandler(loop=loop, state=state, config=config)
     task = asyncio.ensure_future(shipper.start())
     signal.signal(signal.SIGINT, partial(got_int_signal, state))
 

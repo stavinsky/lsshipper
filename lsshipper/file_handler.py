@@ -1,5 +1,4 @@
 import asyncio
-from .common.config import config
 from .connection import logstash_connection
 from .common.utils import get_files_to_update
 import logging
@@ -7,12 +6,13 @@ logger = logging.getLogger(name="general")
 
 
 class FileHandler(object):
-    def __init__(self, loop, state):
+    def __init__(self, loop, state, config):
         self.files_in_work = set()
         self.loop = loop
         self.queue = asyncio.Queue(maxsize=10, loop=self.loop)
         self.tasks = list()
         self.state = state
+        self.config = config
 
     async def ship(self, f):
         async for line, offset in f.get_line():
@@ -34,7 +34,7 @@ class FileHandler(object):
                             timeout=2)
                         break
                     except asyncio.TimeoutError:
-                        logger.debug("Queue is full, timeout on put")
+                        pass
             if line is None:  # if line is None we got last line
                 logger.debug(
                     "file reading is finished, file: {}".format(f.name))
@@ -43,15 +43,12 @@ class FileHandler(object):
         self.files_in_work.remove(f.name)
 
     async def start(self):
-        files_conf = config['files']
-        pattern = files_conf['pattern']
-        newline = files_conf["newline"]
-        logger.debug("new lines is {}".format(newline[0]))
         conn = asyncio.ensure_future(logstash_connection(
-            queue=self.queue, state=self.state, loop=self.loop, ))
+            queue=self.queue, state=self.state,
+            loop=self.loop, config=self.config))
         while not self.state.need_shutdown:
             files = await get_files_to_update(
-                self.loop, files_conf['dir_path'], pattern, newline)
+                self.loop, self.config)
             for f in files:
                 if f.name in self.files_in_work:
                     continue

@@ -5,14 +5,14 @@ import os
 
 
 class LogFile(FileReader):
-    def __init__(self, name, mtime=0, offset=0, sep='\n', config=None):
+    def __init__(self, name, mtime=0, offset=0, config={}):
         super().__init__(name, offset=offset)
-        self.name = name  # ToDo make sure that this variable is full path
+        self.name = name
         self.mtime = mtime  # Current modify time from db
         self.last_mtime = 0   # Modify time from os.stat
         self.offset = offset
         self.db_file = config['database']["file"]
-        self.sep = sep
+        self.sep = config['files']['newline']
 
     @property
     def name(self):

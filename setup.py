@@ -1,5 +1,6 @@
 import os
 from setuptools import setup, find_packages
+import pypandoc
 
 
 def read(fname):
@@ -14,17 +15,17 @@ def parse_requirements(requirements):
 
 setup(
     name="lsshipper",
-    version="0.1",
+    version="0.1.1",
     author="Anton Stavinsky",
-    author_email="stavinsky at gmail dot com",
+    author_email="stavinsky@gmail.com",
     description=("Very basic python logstash shipper"),
     license="MIT",
     keywords="logstash filebeat",
-    url="https://github.com/stavinsky/lsshipper/archive/0.1.tar.gz",
-    packages=find_packages(),
+    url="https://github.com/stavinsky/lsshipper/",
+    packages=find_packages(exclude=['tests*']),
     tests_require=['pytest', 'pytest-asyncio', ],
     setup_requires=['pytest-runner', ],
-    long_description=read('README.MD'),
+    long_description=pypandoc.convert('README.md', 'rst'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
@@ -36,4 +37,5 @@ setup(
             'lsshipper = lsshipper.start:main'
             ]
         },
+    python_requires='>=3.5'
 )

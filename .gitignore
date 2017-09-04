@@ -12,3 +12,4 @@ build/
 .coverage
 .eggs/
 .DS_Store
+dist/

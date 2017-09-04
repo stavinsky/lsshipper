@@ -2,8 +2,6 @@ import pytest
 import asyncio
 from lsshipper.common.state import State
 from lsshipper.connection import logstash_connection
-from lsshipper.common.config import config
-
 
 
 @pytest.mark.asyncio
@@ -26,6 +24,7 @@ async def test_read_common_file(event_loop, unused_tcp_port):
         writer.close()
 
     port = unused_tcp_port
+    config = {}
     config['connection'] = {}
     config['ssl'] = {}
     config['connection']['host'] = '127.0.0.1'
@@ -42,7 +41,7 @@ async def test_read_common_file(event_loop, unused_tcp_port):
     server = await asyncio.start_server(
         handler, host='127.0.0.1', port=port, loop=event_loop)
     client = asyncio.ensure_future(logstash_connection(
-        queue, state, loop=event_loop))
+        queue, state, event_loop, config), )
     await queue.join()
     state.shutdown()
     await done.wait()
@@ -56,7 +55,8 @@ counter = 0
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Cant make shure that all messages will be delivered")
+@pytest.mark.xfail(
+    reason="Cant make shure that all messages will be delivered")
 async def test_read_common_file_with_disconnects(event_loop, unused_tcp_port):
     """transfer with disconnects"""
     test = list()

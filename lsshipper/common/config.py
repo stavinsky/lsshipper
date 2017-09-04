@@ -11,12 +11,11 @@ import argparse
 logger = logging.getLogger("general")
 
 
-def prepare_config(config):
+def prepare_config():
     parser = argparse.ArgumentParser(description='Logstash file shipper')
     parser.add_argument('--config_dir', default='.')
     args = parser.parse_args()
     config_dir = os.path.abspath(args.config_dir)
-    print(config_dir)
 
     log_config_file = os.path.join(config_dir, 'log_config.ini')
     config_file = os.path.join(config_dir, 'config.ini')
@@ -28,7 +27,7 @@ def prepare_config(config):
         logger.error(e)
         sys.exit(1)
 
-    config.update(_config.dict())
+    config = _config.dict()
     config['files']['pattern'] = ast.literal_eval(config['files']['pattern'])
     config['files']['newline'] = ast.literal_eval(config['files']['newline'])
 
@@ -37,6 +36,3 @@ def prepare_config(config):
 
     config['ssl']['enable'] = _config['ssl'].as_bool('enable')
     return config
-
-
-config = {}
