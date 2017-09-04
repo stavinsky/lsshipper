@@ -69,6 +69,8 @@ async def logstash_connection(queue, state, loop, config):
     port = config["connection"]['port']
     while (state.need_shutdown is False) or queue.qsize() > 0:
         if need_reconnect:
+            if state.need_shutdown:
+                return
             logger.info("connecting to server")
             conn = await get_connection(host, port, ssl_context=ssl_context)
         if not conn:
