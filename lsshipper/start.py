@@ -21,7 +21,6 @@ def got_int_signal(state, signum, frame):
 
 def main():
     prepare_config(config)
-    print(config)
     loop = asyncio.get_event_loop()
     state = State(loop)
     shipper = FileHandler(loop=loop, state=state)

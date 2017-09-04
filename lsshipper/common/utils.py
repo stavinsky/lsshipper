@@ -1,6 +1,6 @@
 import os
 from lsshipper.logfile import LogFile
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from lsshipper.common.config import config
 
@@ -20,7 +20,7 @@ def get_files_list(filepath, pattern, separator):
 
 
 async def get_files_to_update(loop, filepath, pattern, line_separator):
-    with ProcessPoolExecutor() as executor:
+    with ThreadPoolExecutor() as executor:
         files = await loop.run_in_executor(
             executor,
             partial(get_files_list,

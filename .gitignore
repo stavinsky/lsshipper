@@ -11,3 +11,4 @@ temp/
 build/
 .coverage
 .eggs/
+.DS_Store
