@@ -1,10 +1,11 @@
 import os
 from setuptools import setup, find_packages
-import pypandoc
-
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst').replace("\r", "")
+except ImportError:
+    with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
+        long_description = f.read()
 
 
 def parse_requirements(requirements):
@@ -15,7 +16,7 @@ def parse_requirements(requirements):
 
 setup(
     name="lsshipper",
-    version="0.1.1",
+    version="0.1.4",
     author="Anton Stavinsky",
     author_email="stavinsky@gmail.com",
     description=("Very basic python logstash shipper"),
@@ -25,7 +26,7 @@ setup(
     packages=find_packages(exclude=['tests*']),
     tests_require=['pytest', 'pytest-asyncio', ],
     setup_requires=['pytest-runner', ],
-    long_description=pypandoc.convert('README.md', 'rst'),
+    long_description=long_description,
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
@@ -37,5 +38,9 @@ setup(
             'lsshipper = lsshipper.start:main'
             ]
         },
-    python_requires='>=3.5'
+    python_requires='>=3.5',
+    data_files=[
+        ('', ['README.md']),
+        ('', ['requirements.txt'])
+    ],
 )

@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/lsshipper.svg)](https://badge.fury.io/py/lsshipper)
 ### Description
 
 This is very simple replacement for ElasticSearch filebeat.
@@ -20,13 +21,14 @@ after that create config directory anywhere you want and put 2 config files ther
 #### running
 
 It can be started as a module:
-```python -m lsshipper --config_dir <dir with configs>
+```bash
+python -m lsshipper --config_dir <dir with configs>
 ```
 
 
 ### Why?
 
-There is windows software that adds preallocated block of zeroes(\x00) to log file. Original filebeat skips such blocks. So big part of logs can be lost.
+There is windows software that adds preallocated block of zeroes(\\x00) to log file. Original filebeat skips such blocks. So big part of logs can be lost.
 
 ### Speed
 
@@ -34,4 +36,4 @@ On my mac mini late 2003 it can write to network about 2Mb/s. I will test later 
 
 
 ### Problems
-1. On very fast server reconnects it can loose one log string. Please check test_connection.py 
+1. On very fast server reconnects it can loose one log string. Please check test_connection.py
