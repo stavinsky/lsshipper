@@ -18,7 +18,7 @@ setup(
     author="Anton Stavinsky",
     author_email="stavinsky at gmail dot com",
     description=("Very basic python logstash shipper"),
-    license="BSD",
+    license="MIT",
     keywords="logstash filebeat",
     url="https://bitbucket.org/stavinsky/logstash_shipper",
     packages=find_packages(),
@@ -28,7 +28,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: MIT License",
     ],
     install_requires=parse_requirements("requirements.txt"),
 )
