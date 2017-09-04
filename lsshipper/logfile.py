@@ -1,12 +1,11 @@
 import json
 from .reader_aio import FileReader
 from .database import DataBase
-from .common.config import config
 import os
 
 
 class LogFile(FileReader):
-    def __init__(self, name, mtime=0, offset=0, sep='\n'):
+    def __init__(self, name, mtime=0, offset=0, sep='\n', config=None):
         super().__init__(name, offset=offset)
         self.name = name  # ToDo make sure that this variable is full path
         self.mtime = mtime  # Current modify time from db

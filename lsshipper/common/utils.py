@@ -2,6 +2,7 @@ import os
 from lsshipper.logfile import LogFile
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from lsshipper.common.config import config
 
 
 def get_files_list(filepath, pattern, separator):
@@ -12,7 +13,7 @@ def get_files_list(filepath, pattern, separator):
             f = LogFile(
                 full_path,
                 mtime=os.stat(full_path).st_mtime,
-                sep=separator)  # have to be BytesArray
+                sep=separator, config=config)  # have to be BytesArray
             files.append(f)
 
     return files

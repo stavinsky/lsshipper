@@ -1,3 +1,4 @@
+from lsshipper.common.config import config, prepare_config
 import asyncio
 from .file_handler import FileHandler
 import signal
@@ -5,7 +6,6 @@ from functools import partial
 import logging
 import logging.config
 from .common.state import State
-from lsshipper.common.config import config, prepare_config
 
 signal_times = 0
 logger = logging.getLogger('general')
