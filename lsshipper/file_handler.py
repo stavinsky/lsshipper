@@ -40,7 +40,6 @@ class FileHandler(object):
                     "file reading is finished, file: {}".format(f.name))
                 f.sync_to_db(mtime_update=True)
 
-
     async def start(self):
         conn = asyncio.ensure_future(logstash_connection(
             queue=self.queue, state=self.state,
