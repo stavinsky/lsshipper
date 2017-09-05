@@ -13,7 +13,10 @@ logger = logging.getLogger("general")
 
 def prepare_config():
     parser = argparse.ArgumentParser(description='Logstash file shipper')
-    parser.add_argument('--config_dir', default='.')
+    parser.add_argument('--config_dir', default='.',
+                        help='path to config directory')
+    parser.add_argument('--run-once', default=False, type=bool,
+                        help='Upload files one by one without watching')
     args = parser.parse_args()
     config_dir = os.path.abspath(args.config_dir)
 
@@ -35,4 +38,6 @@ def prepare_config():
     config['files']['newline'] = config['files']['newline'].encode()
 
     config['ssl']['enable'] = _config['ssl'].as_bool('enable')
+    config['general'] = {}
+    config['general']['run-once'] = args.run_once
     return config

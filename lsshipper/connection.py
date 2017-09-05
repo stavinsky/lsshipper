@@ -57,9 +57,9 @@ async def send_message(reader, writer, message):
 
 async def logstash_connection(queue, state, loop, config):
     ssl_context = get_ssl_context(
-        enable=config['ssl']['enable'], cafile=config['ssl']['cafile'],
-        client_crt=config['ssl']['client_crt'],
-        client_key=config['ssl']['client_key']
+        enable=config['ssl']['enable'], cafile=config['ssl'].get('cafile'),
+        client_crt=config['ssl'].get('client_crt'),
+        client_key=config['ssl'].get('client_key'),
     )
 
     message = None

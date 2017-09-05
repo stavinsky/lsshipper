@@ -24,7 +24,11 @@ def main():
     loop = asyncio.get_event_loop()
     state = State(loop)
     shipper = FileHandler(loop=loop, state=state, config=config)
-    task = asyncio.ensure_future(shipper.start())
+    if config['general']['run-once']:
+        task = asyncio.ensure_future(shipper.run_once())
+    else:
+        task = asyncio.ensure_future(shipper.start())
+
     signal.signal(signal.SIGINT, partial(got_int_signal, state))
 
     try:
