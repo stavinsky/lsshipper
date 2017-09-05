@@ -85,5 +85,5 @@ class FileHandler(object):
                     continue
                 logger.debug("working with file:{}".format(f.name))
                 await self.ship(f)
-                self.state.shutdown()
+            self.state.shutdown()
         await conn
