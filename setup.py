@@ -16,7 +16,7 @@ def parse_requirements(requirements):
 
 setup(
     name="lsshipper",
-    version="0.1.5",
+    version="0.1.6",
     author="Anton Stavinsky",
     author_email="stavinsky@gmail.com",
     description=("Very basic python logstash shipper"),
