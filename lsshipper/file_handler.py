@@ -16,11 +16,10 @@ class FileHandler(object):
 
     async def ship(self, f):
         async for line, offset in f.get_line():
-
             if self.state.need_shutdown:
                 f.sync_to_db(mtime_update=False)
                 try:
-                    await asyncio.wait_for(self.queue.join(), timeout=10)
+                    await asyncio.wait_for(self.queue.join(), timeout=30)
                     logger.warning("waiting for deliver all message")
                 except:
                     logger.error("not all message was delivered")
