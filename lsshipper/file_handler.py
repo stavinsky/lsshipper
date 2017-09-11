@@ -16,6 +16,7 @@ class FileHandler(object):
         self.config = config
 
     async def ship(self, f):
+        logger.info("working with file:{}".format(f.name))
         async for line, offset in f.get_line():
             if self.state.need_shutdown:
                 f.sync_to_db(mtime_update=False)
@@ -36,7 +37,7 @@ class FileHandler(object):
                     except asyncio.TimeoutError:
                         pass
             if line is None:  # if line is None we got last line
-                logger.debug(
+                logger.info(
                     "file reading is finished, file: {}".format(f.name))
                 f.sync_to_db(mtime_update=True)
 
@@ -53,7 +54,6 @@ class FileHandler(object):
                 f.sync_from_db()
                 if not f.need_update:
                     continue
-                logger.debug("working with file:{}".format(f.name))
                 task = asyncio.ensure_future(self.ship(f))
                 task.add_done_callback(
                     partial(
@@ -74,16 +74,16 @@ class FileHandler(object):
         conn = asyncio.ensure_future(logstash_connection(
             queue=self.queue, state=self.state,
             loop=self.loop, config=self.config))
-        while not self.state.need_shutdown:
-            files = await get_files_to_update(
-                self.loop, self.config)
-            for f in files:
-                if f.name in self.files_in_work:
-                    continue
-                f.sync_from_db()
-                if not f.need_update:
-                    continue
-                logger.debug("working with file:{}".format(f.name))
-                await self.ship(f)
-            self.state.shutdown()
+        files = await get_files_to_update(
+            self.loop, self.config)
+        for f in files:
+            if self.state.need_shutdown:
+                break
+            if f.name in self.files_in_work:
+                continue
+            f.sync_from_db()
+            if not f.need_update:
+                continue
+            await self.ship(f)
+        self.state.shutdown()
         await conn
