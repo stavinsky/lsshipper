@@ -1,12 +1,11 @@
 import json
-from .reader_aio import FileReader
+from .reader_aio import get_line
 from .database import DataBase
 import os
 
 
-class LogFile(FileReader):
+class LogFile:
     def __init__(self, name, mtime=0, offset=0, config={}):
-        super().__init__(name, offset=offset)
         self.name = name
         self.mtime = mtime  # Current modify time from db
         self.last_mtime = 0   # Modify time from os.stat
@@ -49,6 +48,12 @@ class LogFile(FileReader):
             "offset": offset,
         }
         return json.dumps(data) + '\n'
+
+    async def get_line(self):
+        async for line, offset in get_line(
+                self.name, offset=self.offset, sep=self.sep):
+            self.offset = offset
+            yield line
 
     def __repr__(self):
         return "<LogFile: {}, {}, {}>".format(
