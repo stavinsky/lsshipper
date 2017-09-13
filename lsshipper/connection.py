@@ -85,5 +85,5 @@ async def logstash_connection(queue, state, loop, config):
 
         if message:
             need_reconnect, message = await send_message(*conn, message)
-    reader, writer = conn
+    _, writer = conn
     writer.close()

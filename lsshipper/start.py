@@ -14,8 +14,10 @@ logger = logging.getLogger('general')
 def got_int_signal(state, signum, frame):
     global signal_times
     signal_times += 1
+    logger.info("got term signal")
     state.shutdown()
     if signal_times > 1:
+        logger.info("got term signal second time. Going to kill main loop")
         state.loop.close()
 
 
@@ -30,6 +32,7 @@ def main():
         task = asyncio.ensure_future(shipper.start())
 
     signal.signal(signal.SIGINT, partial(got_int_signal, state))
+    signal.signal(signal.SIGTERM, partial(got_int_signal, state))
 
     try:
         loop.run_until_complete(task)

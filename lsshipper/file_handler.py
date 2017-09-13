@@ -11,7 +11,6 @@ class FileHandler(object):
         self.files_in_work = set()
         self.loop = loop
         self.queue = asyncio.Queue(maxsize=10, loop=self.loop)
-        self.tasks = list()
         self.state = state
         self.config = config
 
@@ -21,12 +20,18 @@ class FileHandler(object):
             if self.state.need_shutdown:
                 f.sync_to_db(mtime_update=False)
                 try:
-                    await asyncio.wait_for(self.queue.join(), timeout=30)
                     logger.warning("waiting for deliver all message")
+                    await asyncio.wait_for(self.queue.join(), timeout=60)
                 except:
                     logger.error("not all message was delivered")
                 break
-            if line:
+            if line is None:  # if line is None we got last line
+                logger.info(
+                    "file reading is finished, file: {}".format(f.name))
+                f.sync_to_db(mtime_update=True)
+                break
+
+            if len(line.strip()) > 0:
                 message = f.line_to_json(line, offset)
                 while not self.state.need_shutdown:
                     try:
@@ -36,18 +41,16 @@ class FileHandler(object):
                         break
                     except asyncio.TimeoutError:
                         pass
-            if line is None:  # if line is None we got last line
-                logger.info(
-                    "file reading is finished, file: {}".format(f.name))
-                f.sync_to_db(mtime_update=True)
 
     async def start(self):
         conn = asyncio.ensure_future(logstash_connection(
             queue=self.queue, state=self.state,
             loop=self.loop, config=self.config))
         while not self.state.need_shutdown:
+            logger.debug("files in work: {}".format(self.files_in_work))
             files = await get_files_to_update(
                 self.loop, self.config)
+
             for f in files:
                 if f.name in self.files_in_work:
                     continue
@@ -55,19 +58,11 @@ class FileHandler(object):
                 if not f.need_update:
                     continue
                 task = asyncio.ensure_future(self.ship(f))
-                task.add_done_callback(
-                    partial(
-                        lambda fut, name: self.files_in_work.remove, f.name))
-                self.tasks.append(task)
+                task.add_done_callback(partial(
+                    lambda name, _: self.files_in_work.remove(name), f.name))
                 self.files_in_work.add(f.name)
-            self.tasks = list(task for task in self.tasks if not task.done())
             await asyncio.sleep(3.14)
             logger.info("queue size: {}".format(self.queue.qsize()))
-
-        while self.tasks:
-            self.tasks = list(task for task in self.tasks if not task.done())
-            logger.info("stopping tasks, still {}".format(len(self.tasks)))
-            await asyncio.sleep(0.3)
         await conn
 
     async def run_once(self):
@@ -79,11 +74,8 @@ class FileHandler(object):
         for f in files:
             if self.state.need_shutdown:
                 break
-            if f.name in self.files_in_work:
-                continue
             f.sync_from_db()
-            if not f.need_update:
-                continue
-            await self.ship(f)
+            if f.need_update:
+                await self.ship(f)
         self.state.shutdown()
         await conn
