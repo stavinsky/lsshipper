@@ -13,3 +13,4 @@ build/
 .eggs/
 .DS_Store
 dist/
+.mypy_cache/
