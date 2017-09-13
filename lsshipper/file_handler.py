@@ -22,7 +22,7 @@ class FileHandler(object):
                 try:
                     logger.warning("waiting for deliver all message")
                     await asyncio.wait_for(self.queue.join(), timeout=60)
-                except:
+                except asyncio.TimeoutError:
                     logger.error("not all message was delivered")
                 break
             if line is None:  # if line is None we got last line
