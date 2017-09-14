@@ -1,7 +1,6 @@
 from configobj import ConfigObj
 import logging
 import configobj
-import re
 import sys
 import ast
 import os
@@ -34,7 +33,6 @@ def prepare_config():
     config['files']['pattern'] = ast.literal_eval(config['files']['pattern'])
     config['files']['newline'] = ast.literal_eval(config['files']['newline'])
 
-    config['files']['pattern'] = re.compile(config['files']['pattern'])
     config['files']['newline'] = config['files']['newline'].encode()
 
     config['ssl']['enable'] = _config['ssl'].as_bool('enable')

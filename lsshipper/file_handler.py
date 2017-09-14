@@ -2,6 +2,7 @@ import asyncio
 from .connection import logstash_connection
 from .common.utils import get_files_to_update
 from functools import partial
+from lsshipper.logfile import LogFile
 import logging
 logger = logging.getLogger(name="general")
 
@@ -47,11 +48,13 @@ class FileHandler(object):
         while not self.state.need_shutdown:
             logger.debug("files in work: {}".format(self.files_in_work))
             files = await get_files_to_update(
-                self.loop, self.config)
-
+                self.loop,
+                self.config['files']['dir_path'],
+                self.config['files']['pattern']
+            )
+            files = [LogFile(**f, config=self.config) for f in files
+                     if f['name'] not in self.files_in_work]
             for f in files:
-                if f.name in self.files_in_work:
-                    continue
                 f.sync_from_db()
                 if not f.need_update:
                     continue
@@ -65,7 +68,11 @@ class FileHandler(object):
 
     async def run_once(self):
         files = await get_files_to_update(
-            self.loop, self.config)
+            self.loop,
+            self.config['files']['dir_path'],
+            self.config['files']['pattern']
+        )
+        files = [LogFile(**f, config=self.config) for f in files]
         for f in files:
             if self.state.need_shutdown:
                 break
