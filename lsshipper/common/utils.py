@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
 
-async def get_files_to_update(loop, dir_path, pattern):
+async def get_files(loop, dir_path, pattern):
     def get_files_list(dir_path, pattern):
         files = list()
         pattern = re.compile(pattern)
