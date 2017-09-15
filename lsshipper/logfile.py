@@ -1,4 +1,5 @@
 from .reader_aio import get_line
+import os
 
 
 class LogFile:
