@@ -1,4 +1,3 @@
-import json
 from .reader_aio import get_line
 from .database import DataBase
 import os
@@ -37,17 +36,6 @@ class LogFile:
             self.last_mtime = self.mtime
         with DataBase(self.db_file) as db:
             db.update_file(self.name, self.offset, self.last_mtime)
-
-    def line_to_json(self, line, offset):
-        data = {
-            "message": line.decode('utf-8', 'replace'),
-            "fields": {
-                "program": 'mt4'
-            },
-            "source": self.name,
-            "offset": offset,
-        }
-        return json.dumps(data) + '\n'
 
     async def get_line(self):
         async for line, offset in get_line(

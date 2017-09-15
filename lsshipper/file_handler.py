@@ -1,13 +1,13 @@
 import asyncio
 from .connection import logstash_connection
-from .common.utils import get_files_to_update
+from .common.utils import get_files_to_update, line_to_json
 from functools import partial
 from lsshipper.logfile import LogFile
 import logging
 logger = logging.getLogger(name="general")
 
 
-async def ship(f, state, queue):
+async def ship(f, state, queue, fields={}):
     logger.info("working with file:{}".format(f.name))
     async for line in f.get_line():
         if state.need_shutdown:
@@ -19,7 +19,7 @@ async def ship(f, state, queue):
                 logger.error("not all message was delivered")
             return
         if len(line.strip()) > 0:
-            message = f.line_to_json(line, f.offset)
+            message = line_to_json(f.name, line, f.offset, fields)
             while not state.need_shutdown:
                 try:
                     await asyncio.wait_for(
@@ -58,7 +58,8 @@ class FileHandler(object):
                 f.sync_from_db()
                 if not f.need_update:
                     continue
-                task = asyncio.ensure_future(ship(f, self.state, self.queue))
+                task = asyncio.ensure_future(
+                    ship(f, self.state, self.queue, self.config['fields']))
                 task.add_done_callback(partial(
                     lambda name, _: self.files_in_work.remove(name), f.name))
                 self.files_in_work.add(f.name)
@@ -78,6 +79,6 @@ class FileHandler(object):
                 break
             f.sync_from_db()
             if f.need_update:
-                await ship(f, self.state, self.queue)
+                await ship(f, self.state, self.queue, self.config['fields'])
         self.state.shutdown()
         await self.con

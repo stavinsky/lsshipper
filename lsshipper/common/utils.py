@@ -1,7 +1,8 @@
 import os
+import re
+import json
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-import re
 
 
 async def get_files_to_update(loop, dir_path, pattern):
@@ -26,3 +27,13 @@ async def get_files_to_update(loop, dir_path, pattern):
             executor, partial(
                 get_files_list, dir_path, pattern))
     return files
+
+
+def line_to_json(name, line, offset, fields={}):
+    data = {
+        "message": line.decode('utf-8', 'replace'),
+        "fields": fields,
+        "source": name,
+        "offset": offset,
+    }
+    return json.dumps(data) + '\n'
