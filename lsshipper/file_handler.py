@@ -4,7 +4,24 @@ from .common.utils import get_files, line_to_json
 from functools import partial
 from lsshipper.logfile import LogFile
 import logging
+from .database import DataBase
 logger = logging.getLogger(name="general")
+
+
+def sync_from_db(logfile, db_file):
+    with DataBase(db_file) as db:
+        db.insert_ignore_file(logfile.name, 0)
+        f = db.get_file(logfile.name)
+    logfile.offset = f[2]
+    logfile.last_mtime = f[1]
+    return logfile
+
+
+def sync_to_db(logfile, db_file, finished=False):
+    if finished:
+        logfile.last_mtime = logfile.mtime
+    with DataBase(db_file) as db:
+        db.update_file(logfile.name, logfile.offset, logfile.last_mtime)
 
 
 async def ship(f, state, queue, fields={}):
@@ -23,7 +40,8 @@ async def ship(f, state, queue, fields={}):
                         timeout=1)
                     break
                 except asyncio.TimeoutError:
-                    pass
+                    finished = False
+                # TODO remember prev offset and set it to the logfile object
     logger.info(
         "file reading is finished, file: {}".format(f.name))
     return finished
@@ -46,20 +64,18 @@ class FileHandler(object):
             self.config['files']['dir_path'],
             self.config['files']['pattern']
         )
-        files = [LogFile(**f, config=self.config) for f in files
-                 if f['name'] not in self.files_in_work]
+        files = [LogFile(**f, sep=self.config['files']['newline'])
+                 for f in files if f['name'] not in self.files_in_work]
         for f in files:
-            f.sync_from_db()
+            f = sync_from_db(f, self.config['database']['file'])
             if f.need_update:
                 yield f
 
     async def start(self):
         def finished_callback(f, fut):
             self.files_in_work.remove(f.name)
-            if fut.result():
-                f.sync_to_db(mtime_update=True)
-            else:
-                f.sync_to_db(mtime_update=False)
+            finished = fut.result()
+            sync_to_db(f, self.config['database']['file'], finished=finished)
 
         while not self.state.need_shutdown:
             logger.debug("files in work: {}".format(self.files_in_work))
@@ -80,9 +96,8 @@ class FileHandler(object):
             if f.need_update:
                 finished = await ship(
                     f, self.state, self.queue, self.config['fields'])
-                if finished:
-                    f.sync_to_db(mtime_update=True)
-                else:
-                    f.sync_to_db(mtime_update=False)
+                sync_to_db(
+                    f, self.config['database']['file'], finished=finished)
+
         self.state.shutdown()
         await self.con
