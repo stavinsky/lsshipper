@@ -2,7 +2,7 @@ import os
 import aiofiles
 
 
-async def get_line(name, offset=0, sep=b'\r\n', chunk_size=4096, ):
+async def get_line(name, offset=0, sep=b'\r\n', chunk_size=4096):
     name = os.path.abspath(name)
     async with aiofiles.open(name, 'r+b') as f:
         await f.seek(offset)

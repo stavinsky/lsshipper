@@ -26,7 +26,8 @@ async def get_files(loop, dir_path, pattern):
         files = await loop.run_in_executor(
             executor, partial(
                 get_files_list, dir_path, pattern))
-    return files
+        for f in files:
+            yield f
 
 
 def line_to_json(name, line, offset, fields={}):

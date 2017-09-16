@@ -26,6 +26,13 @@ class DataBase():
 
         return result
 
+    def sync_from_db(self, f):
+        self.insert_ignore_file(f['name'], 0)
+        r = self.get_file(f['name'])
+        f['last_mtime'] = r[1]
+        f['offset'] = r[2]
+        return f
+
     def update_file(self, filename, offset, mtime):
         self.c.execute("""UPDATE files
                   SET offset=?, mtime=?
