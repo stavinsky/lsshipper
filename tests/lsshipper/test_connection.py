@@ -74,34 +74,35 @@ async def test_read_common_file_with_disconnects(event_loop, unused_tcp_port):
                 break
 
             test.append(line.decode())
-            if counter % 7 == 0:
+            if counter % 6 == 0:
                 writer.close()
                 return
         done.set()
         writer.close()
 
     port = unused_tcp_port
+    config = {}
     config['connection'] = {}
     config['ssl'] = {}
     config['connection']['host'] = '127.0.0.1'
     config['connection']['port'] = port
     config['ssl']['enable'] = False
     queue = asyncio.Queue(loop=event_loop)
-    test_messages = list()
+    sent_messages = list()
 
     for i in range(100):
         m = "Message {}\n".format(i)
-        test_messages.append(m)
+        sent_messages.append(m)
         await queue.put(m)
 
     server = await asyncio.start_server(
         handler, host='127.0.0.1', port=port, loop=event_loop)
     client = asyncio.ensure_future(logstash_connection(
-        queue, state, loop=event_loop))
+        queue, state, loop=event_loop, config=config))
     await queue.join()
     state.shutdown()
     await done.wait()
     await client
-    assert len(test) == len(test_messages)
+    assert test == sent_messages
     server.close()
     await server.wait_closed()

@@ -6,7 +6,11 @@ import logging
 import logging.config
 from .common.state import State
 from lsshipper.uploaders import Uploader, OneTimeUploader
-
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except ImportError:
+    pass
 
 signal_times = 0
 logger = logging.getLogger('general')
