@@ -2,6 +2,9 @@ import asyncio
 import socket
 import ssl
 import logging
+import async_timeout
+import contextlib
+
 
 logger = logging.getLogger(name="general")
 
@@ -18,13 +21,10 @@ def get_ssl_context(
 
 
 async def get_message_from_queue(queue):
-    message = None
-    try:
-        message = await asyncio.wait_for(queue.get(), timeout=1)
-        queue.task_done()
-    except asyncio.TimeoutError:
-        pass
-    return message
+    with contextlib.suppress(asyncio.TimeoutError):
+        async with async_timeout.timeout(1):
+            message = await queue.get()
+            return message
 
 
 async def get_connection(host, port, ssl_context=None):
@@ -39,20 +39,7 @@ async def get_connection(host, port, ssl_context=None):
             ("cant connect to {}:{}, "
              "going to try again").format(
                 host, port))
-        return None
-
-
-async def send_message(reader, writer, message):
-    if reader.at_eof():
-        logger.error("Server disconnected while transfer")
-        return True, message
-    try:
-        writer.write(message.encode())
-        await writer.drain()
-    except Exception as e:
-        logger.error("Exception: {}".format(e))
-        return True, message
-    return False, None
+        return None, None
 
 
 async def logstash_connection(queue, state, loop, config):
@@ -61,10 +48,8 @@ async def logstash_connection(queue, state, loop, config):
         client_crt=config['ssl'].get('client_crt'),
         client_key=config['ssl'].get('client_key'),
     )
-
     message = None
     need_reconnect = True
-    conn = None
     host = config["connection"]['host']
     port = config["connection"]['port']
     while (state.need_shutdown is False) or queue.qsize() > 0:
@@ -72,19 +57,32 @@ async def logstash_connection(queue, state, loop, config):
             if state.need_shutdown:
                 return
             logger.info("connecting to server")
-            conn = await get_connection(host, port, ssl_context=ssl_context)
-        if not conn:
+            conn = None
+            reader, writer = await get_connection(
+                host, port, ssl_context=ssl_context)
+        if reader is None:
             logger.info("reconnecting")
             await asyncio.sleep(1)
             need_reconnect = True
             continue
-        need_reconnect = False
 
         if not message:
             message = await get_message_from_queue(queue)
+            if not message:
+                continue
+        try:
+            writer.write(message.encode())
+            await writer.drain()
+        except ConnectionError:
+            need_reconnect = True
+            continue
+        if reader.at_eof():
+            logger.error("Server disconnected while transfer")
+            need_reconnect = True
+        else:
+            message = None
+            need_reconnect = False
 
-        if message:
-            need_reconnect, message = await send_message(*conn, message)
     if conn:
         _, writer = conn
         writer.close()

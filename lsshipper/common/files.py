@@ -3,6 +3,8 @@ import logging
 import asyncio
 from lsshipper.reader_aio import get_line
 from lsshipper.common.utils import line_to_json
+from async_timeout import timeout
+import contextlib
 
 logger = logging.getLogger(name="files")
 
@@ -42,14 +44,11 @@ async def ship(f, state, queue, fields={}):
         if len(line.strip()):
             message = line_to_json(f.name, line, f.offset, fields)
             while not state.need_shutdown:
-                try:
-                    await asyncio.wait_for(
-                        queue.put(message),
-                        timeout=1)
-                    f.offset = offset
-                    break
-                except asyncio.TimeoutError:
-                    pass
+                with contextlib.suppress(asyncio.TimeoutError):
+                    async with timeout(1):
+                        await queue.put(message)
+                        f.offset = offset
+                        break
     logger.info(
         "file reading is finished, file: {}".format(f.name))
     return True
