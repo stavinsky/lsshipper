@@ -14,7 +14,8 @@ async def get_files(loop, dir_path, pattern):
                 if fo.is_dir():
                     continue
                 if pattern.match(fo.name):
-                    full_path = os.path.join(dir_path, fo.name)
+                    full_path = os.path.abspath(
+                        os.path.join(dir_path, fo.name))
                     f = {
                         "name": full_path,
                         "mtime": fo.stat().st_mtime,
