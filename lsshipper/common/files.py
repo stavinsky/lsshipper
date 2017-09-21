@@ -6,7 +6,7 @@ from lsshipper.common.utils import line_to_json
 from async_timeout import timeout
 import contextlib
 
-logger = logging.getLogger(name="files")
+logger = logging.getLogger(name="general")
 
 
 class File:
