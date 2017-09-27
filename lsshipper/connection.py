@@ -24,7 +24,9 @@ async def get_message_from_queue(queue):
     with contextlib.suppress(asyncio.TimeoutError):
         async with async_timeout.timeout(1):
             message = await queue.get()
+            queue.task_done()
             return message
+    return None
 
 
 async def get_connection(host, port, ssl_context=None):
@@ -55,11 +57,11 @@ async def logstash_connection(queue, state, loop, config):
     while (state.need_shutdown is False) or queue.qsize() > 0:
         if need_reconnect:
             if state.need_shutdown:
-                return
+                break
             logger.info("connecting to server")
-            conn = None
             reader, writer = await get_connection(
                 host, port, ssl_context=ssl_context)
+            need_reconnect = False
         if reader is None:
             logger.info("reconnecting")
             await asyncio.sleep(1)
@@ -83,6 +85,7 @@ async def logstash_connection(queue, state, loop, config):
             message = None
             need_reconnect = False
 
-    if conn:
-        _, writer = conn
+    if writer:
         writer.close()
+        print("close1")
+    return
