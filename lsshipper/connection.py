@@ -87,5 +87,4 @@ async def logstash_connection(queue, state, loop, config):
 
     if writer:
         writer.close()
-        print("close1")
     return
